@@ -15,6 +15,8 @@
  */
 package nl.knaw.dans.lib.util;
 
+import lombok.Getter;
+import lombok.Setter;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
 import org.slf4j.Logger;
@@ -22,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
+@Getter
+@Setter
 public class DataverseClientFactory {
     private static final Logger log = LoggerFactory.getLogger(DataverseClientFactory.class);
 
@@ -31,48 +35,20 @@ public class DataverseClientFactory {
     private int awaitLockStateMaxNumberOfRetries = 5;
     private int awaitLockStateMillisecondsBetweenRetries = 5000;
 
+    private int awaitIndexingMaxNumberOfRetries = 5;
+
+    private int awaitIndexingMillisecondsBetweenRetries = 5000;
+
+
     public DataverseClient build() {
-        DataverseClientConfig config = new DataverseClientConfig(baseUrl, apiKey, awaitLockStateMaxNumberOfRetries, awaitLockStateMillisecondsBetweenRetries, unblockKey);
+        DataverseClientConfig config = new DataverseClientConfig(
+            baseUrl,
+            apiKey,
+            awaitLockStateMaxNumberOfRetries,
+            awaitLockStateMillisecondsBetweenRetries,
+            awaitIndexingMaxNumberOfRetries,
+            awaitIndexingMillisecondsBetweenRetries,
+            unblockKey);
         return new DataverseClient(config);
-    }
-
-    public URI getBaseUrl() {
-        return baseUrl;
-    }
-
-    public void setBaseUrl(URI baseUrl) {
-        this.baseUrl = baseUrl;
-    }
-
-    public String getApiKey() {
-        return apiKey;
-    }
-
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    public String getUnblockKey() {
-        return unblockKey;
-    }
-
-    public void setUnblockKey(String unblockKey) {
-        this.unblockKey = unblockKey;
-    }
-
-    public int getAwaitLockStateMaxNumberOfRetries() {
-        return awaitLockStateMaxNumberOfRetries;
-    }
-
-    public void setAwaitLockStateMaxNumberOfRetries(int awaitLockStateMaxNumberOfRetries) {
-        this.awaitLockStateMaxNumberOfRetries = awaitLockStateMaxNumberOfRetries;
-    }
-
-    public int getAwaitLockStateMillisecondsBetweenRetries() {
-        return awaitLockStateMillisecondsBetweenRetries;
-    }
-
-    public void setAwaitLockStateMillisecondsBetweenRetries(int awaitLockStateMillisecondsBetweenRetries) {
-        this.awaitLockStateMillisecondsBetweenRetries = awaitLockStateMillisecondsBetweenRetries;
     }
 }
