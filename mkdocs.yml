@@ -25,6 +25,7 @@ nav:
   - Manual: index.md
   - JavaDocs: api.md
   - Examples: examples.md
+  - ⇒ DANS Data Station Architecture: arch.md
 
 plugins:
   - markdownextradata
