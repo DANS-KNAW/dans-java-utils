@@ -32,13 +32,10 @@ public class DataverseClientFactory {
     private URI baseUrl;
     private String apiKey;
     private String unblockKey;
-    private int awaitLockStateMaxNumberOfRetries = 5;
-    private int awaitLockStateMillisecondsBetweenRetries = 5000;
-
-    private int awaitIndexingMaxNumberOfRetries = 5;
-
-    private int awaitIndexingMillisecondsBetweenRetries = 5000;
-
+    private int awaitLockStateMaxNumberOfRetries = 30;
+    private int awaitLockStateMillisecondsBetweenRetries = 500;
+    private int awaitIndexingMaxNumberOfRetries = 15;
+    private int awaitIndexingMillisecondsBetweenRetries = 1000;
 
     public DataverseClient build() {
         DataverseClientConfig config = new DataverseClientConfig(
