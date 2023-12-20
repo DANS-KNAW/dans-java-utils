@@ -23,7 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
-import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,11 @@ public class DataverseClientFactory {
     private int awaitIndexingMillisecondsBetweenRetries = 1000;
     private HttpClientConfiguration httpClient = new HttpClientConfiguration();
 
-    public DataverseClient build(Environment environment) {
+    public DataverseClient build() {
+        return build(null, null);
+    }
+
+    public DataverseClient build(Environment environment, String name) {
         DataverseClientConfig config = new DataverseClientConfig(
             baseUrl,
             apiKey,
@@ -53,7 +57,14 @@ public class DataverseClientFactory {
             awaitIndexingMillisecondsBetweenRetries,
             unblockKey);
 
-        return new DataverseClient(config, new HttpClientBuilder(environment).using(httpClient).build(httpClient.getUserAgent().toString()), environment.getObjectMapper());
+        if (environment == null) {
+            return new DataverseClient(config, HttpClients.createDefault(), new ObjectMapper());
+        }
+        else {
+            return new DataverseClient(config,
+                new HttpClientBuilder(environment).using(httpClient).build(name), // N.B. name must be unique in the Environment, otherwise the old connection will be overwritten
+                environment.getObjectMapper());
+        }
     }
 
 }
