@@ -15,10 +15,15 @@
  */
 package nl.knaw.dans.lib.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dropwizard.client.HttpClientBuilder;
+import io.dropwizard.client.HttpClientConfiguration;
+import io.dropwizard.core.setup.Environment;
 import lombok.Getter;
 import lombok.Setter;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +41,9 @@ public class DataverseClientFactory {
     private int awaitLockStateMillisecondsBetweenRetries = 500;
     private int awaitIndexingMaxNumberOfRetries = 15;
     private int awaitIndexingMillisecondsBetweenRetries = 1000;
+    private HttpClientConfiguration httpClient = new HttpClientConfiguration();
 
-    public DataverseClient build() {
+    public DataverseClient build(Environment environment) {
         DataverseClientConfig config = new DataverseClientConfig(
             baseUrl,
             apiKey,
@@ -46,6 +52,8 @@ public class DataverseClientFactory {
             awaitIndexingMaxNumberOfRetries,
             awaitIndexingMillisecondsBetweenRetries,
             unblockKey);
-        return new DataverseClient(config);
+
+        return new DataverseClient(config, new HttpClientBuilder(environment).using(httpClient).build(httpClient.getUserAgent().toString()), environment.getObjectMapper());
     }
+
 }
