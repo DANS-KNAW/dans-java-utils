@@ -28,6 +28,6 @@ To use this library in a Maven-based project:
 
         <dependency>
             <groupId>nl.knaw.dans</groupId>
-            <artifactId>dans-java-uttils</artifactId>
+            <artifactId>dans-java-utils</artifactId>
             <version>{version}</version> <!-- <=== FILL LIBRARY VERSION TO USE HERE -->
         </dependency>
