@@ -18,38 +18,66 @@ package nl.knaw.dans.lib.util;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
+import io.dropwizard.configuration.ConfigurationFactory;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.FileConfigurationSourceProvider;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.configuration.YamlConfigurationFactory;
 import io.dropwizard.core.Configuration;
+import io.dropwizard.jackson.Jackson;
+import io.dropwizard.jersey.validation.Validators;
 import io.dropwizard.util.Generics;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
+import javax.validation.Validator;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public abstract class AbstractCommandLineApp<C extends Configuration> implements Callable<Integer> {
     public static String CONFIG_FILE_KEY = "dans.default.config";
-    public static String CONFIG_FILE_OVERRIDE_KEY = "dans.default.config.override";
+
+    /**
+     * Path from which an example configuration file can be loaded, to be instantiated with the default configuration, if no configuration file is found.
+     */
+    public static String EXAMPLE_CONFIG_FILE_KEY = "dans.default.example.config";
 
     public void run(String[] args) throws IOException, ConfigurationException, InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.OFF);
         File configFile = new File(System.getProperty(CONFIG_FILE_KEY));
-        List<File> configFiles = new ArrayList<>();
-        configFiles.add(configFile);
-        if (System.getProperty(CONFIG_FILE_OVERRIDE_KEY) != null) {
-            configFiles.add(new File(System.getProperty(CONFIG_FILE_OVERRIDE_KEY)));
+        if (!configFile.exists()) {
+            Path exampleConfigFile = Paths.get(System.getProperty(EXAMPLE_CONFIG_FILE_KEY));
+            FileUtils.copyFile(exampleConfigFile.toFile(), configFile);
+            System.err.println("Configuration file not found, copied example configuration file to " + configFile.getAbsolutePath());
         }
-        C config = new ConfigLoader<C>(Generics.getTypeParameter(getClass(), Configuration.class), configFiles.toArray(new File[] {})).loadConfiguration();
+        C config = loadConfiguration(configFile);
         MetricRegistry metricRegistry = new MetricRegistry();
         config.getLoggingFactory().configure(metricRegistry, getName());
         CommandLine commandLine = new CommandLine(this);
         configureCommandLine(commandLine, config);
         System.exit(commandLine.execute(args));
+    }
+
+    public C loadConfiguration(File configFile) throws ConfigurationException, IOException {
+        Validator validator = Validators.newValidator();
+        ObjectMapper objectMapper = Jackson.newObjectMapper(new YAMLFactory());
+
+        SubstitutingSourceProvider sourceProvider = new SubstitutingSourceProvider(
+            new FileConfigurationSourceProvider(),
+            new EnvironmentVariableSubstitutor(false)
+        );
+
+        ConfigurationFactory<C> configurationFactory = new YamlConfigurationFactory<>(Generics.getTypeParameter(getClass(), Configuration.class), validator, objectMapper, "dans");
+        return configurationFactory.build(sourceProvider, configFile.getPath());
     }
 
     public abstract String getName();
