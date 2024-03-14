@@ -16,27 +16,43 @@
 package nl.knaw.dans.lib.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
+import io.dropwizard.configuration.ConfigurationSourceProvider;
+import io.dropwizard.configuration.ConfigurationValidationException;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.FileConfigurationSourceProvider;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.configuration.YamlConfigurationFactory;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.PropertyUtils;
 
+import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.validation.constraints.NotEmpty;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 public class ConfigLoader<C> {
     private final Class<C> configurationClass;
     private final File[] configFile;
+
+
 
     /**
      * Load a configuration from a file and possibly override it with other files.
@@ -49,61 +65,43 @@ public class ConfigLoader<C> {
         this.configFile = configFile;
     }
 
-    public C loadConfiguration() throws Exception {
+    public C loadConfiguration() throws ConfigurationException, IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
         Validator validator = Validators.newValidator();
         ObjectMapper objectMapper = Jackson.newObjectMapper(new YAMLFactory());
+
+        SubstitutingSourceProvider sourceProvider = new SubstitutingSourceProvider(
+            new FileConfigurationSourceProvider(),
+            new EnvironmentVariableSubstitutor(false)
+        );
+
         ConfigurationFactory<C> configurationFactory = new YamlConfigurationFactory<>(configurationClass, validator, objectMapper, "dans");
-        C config = configurationFactory.build(configFile[0]);
+        C config = configurationFactory.build(sourceProvider, configFile[0].getPath());
 
         for (int i = 1; i < configFile.length; i++) {
             if (configFile[i].exists()) {
-                C overrideConfig = loadOverrides(configFile[i]);
-                merge(config, overrideConfig);
+                updateConfig(config, configFile[i]);
             }
             else {
                 log.debug("Override config file {} does not exist, skipping", configFile[i]);
             }
         }
+        String paths = String.join(", overridden by ", Arrays.stream(configFile).map(File::getAbsolutePath).toArray(String[]::new));
+        validate(validator, paths, config);
         return config;
     }
 
-    private C loadOverrides(File configFile) throws IOException, ConfigurationException {
-        ObjectMapper objectMapper = Jackson.newObjectMapper(new YAMLFactory());
-        ConfigurationFactory<C> factory = new YamlConfigurationFactory<>(configurationClass, null, objectMapper, "dans");
-        return factory.build(configFile);
+    private void updateConfig(C config, File overrideConfig) throws IOException {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.setDefaultMergeable(true);
+        mapper.configOverride(List.class).setMergeable(false);
+        mapper.readerForUpdating(config).readValue(overrideConfig);
     }
 
-    private void merge(Object config, Object overrideConfig) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        PropertyDescriptor[] descriptors = PropertyUtils.getPropertyDescriptors(overrideConfig);
-        for (PropertyDescriptor descriptor : descriptors) {
-            String name = descriptor.getName();
-            if ("class".equals(name)) {
-                continue; // No need to handle
-            }
-            if (PropertyUtils.isReadable(overrideConfig, name) && PropertyUtils.isWriteable(config, name)) {
-                Object overrideValue = PropertyUtils.getSimpleProperty(overrideConfig, name);
-                if (overrideValue == null) {
-                    continue; // Ignore null value
-                }
-                if (overrideValue instanceof Collection) {
-                    // For simplicity, replace the collection
-                    PropertyUtils.setSimpleProperty(config, name, overrideValue);
-                }
-                else {
-                    Object originalValue = PropertyUtils.getSimpleProperty(config, name);
-                    if (originalValue != null && originalValue.getClass().equals(overrideValue.getClass())) {
-                        if (originalValue instanceof String || originalValue instanceof Number || originalValue instanceof Boolean) {
-                            // Treat as simple property and replace directly
-                            PropertyUtils.setSimpleProperty(config, name, overrideValue);
-                        }
-                        else {
-                            merge(originalValue, overrideValue);
-                        }
-                    }
-                    else {
-                        PropertyUtils.setSimpleProperty(config, name, overrideValue);
-                    }
-                }
+    private void validate(Validator validator, String path, C config) throws ConfigurationValidationException {
+        if (validator != null) {
+            final Set<ConstraintViolation<C>> violations = validator.validate(config);
+            if (!violations.isEmpty()) {
+                throw new ConfigurationValidationException(path, violations);
             }
         }
     }
