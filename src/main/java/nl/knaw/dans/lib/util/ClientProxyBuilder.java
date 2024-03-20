@@ -20,9 +20,9 @@ import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.core.setup.Environment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.beanutils.BeanUtils;
 
 import javax.ws.rs.client.Client;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Objects;
@@ -72,9 +72,20 @@ public class ClientProxyBuilder<A, D> {
             .using(httpClient)
             .build(getClass().getName() + " client");
         try {
+            /*
+             * Note that BeanUtils.setProperty will be silently ignored, probably because the setter returns the 'this' reference.
+             */
+
             // End-slashes trip up the API client, so we remove them from the base path.
-            BeanUtils.setProperty(apiClient, "basePath", basePath.toString().replaceAll("/+$", ""));
-            BeanUtils.setProperty(apiClient, "httpClient", client);
+            // Set basePath
+            Field basePathField = apiClient.getClass().getDeclaredField("basePath");
+            basePathField.setAccessible(true);
+            basePathField.set(apiClient, basePath.toString().replaceAll("/+$", ""));
+
+            // Set httpClient
+            Field httpClientField = apiClient.getClass().getDeclaredField("httpClient");
+            httpClientField.setAccessible(true);
+            httpClientField.set(apiClient, client);
 
             // Call addDefaultHeader on the apiClient to set the Accept header to application/json
             // By default no Accept header is set, which sometimes causes the server to try to format errors as HTML and failing, making it hard to get at the underlying error message.
