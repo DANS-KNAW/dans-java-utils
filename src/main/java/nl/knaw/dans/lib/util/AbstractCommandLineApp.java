@@ -30,8 +30,10 @@ import io.dropwizard.core.Configuration;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.validation.Validators;
 import io.dropwizard.util.Generics;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;
+import picocli.AutoComplete.GenerateCompletion;
 import picocli.CommandLine;
 
 import javax.validation.Validator;
@@ -42,6 +44,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
+@Slf4j
 public abstract class AbstractCommandLineApp<C extends Configuration> implements Callable<Integer> {
     public static String CONFIG_FILE_KEY = "dans.default.config";
 
@@ -64,6 +67,7 @@ public abstract class AbstractCommandLineApp<C extends Configuration> implements
         config.getLoggingFactory().configure(metricRegistry, getName());
         CommandLine commandLine = new CommandLine(this);
         configureCommandLine(commandLine, config);
+        commandLine.addSubcommand(new GenerateCompletion());
         System.exit(commandLine.execute(args));
     }
 

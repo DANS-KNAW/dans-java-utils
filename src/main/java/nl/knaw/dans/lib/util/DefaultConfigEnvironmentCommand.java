@@ -22,15 +22,12 @@ import net.sourceforge.argparse4j.inf.Argument;
 import net.sourceforge.argparse4j.inf.Subparser;
 
 /**
- * A DropWizard {@link EnvironmentCommand} that configures the value of system property `dans.default.config`
- * as the default for the `file` parameter. This can be used to create a start-up script for the application that
- * does not require the user to explicitly provide the `config.yml` location with every invocation, .e.g.,
+ * A DropWizard {@link EnvironmentCommand} that configures the value of system property `dans.default.config` as the default for the `file` parameter. This can be used to create a start-up script for
+ * the application that does not require the user to explicitly provide the `config.yml` location with every invocation, .e.g.,
  * <p>
- * ```bash
- * ARGS=$@
+ * ```bash ARGS=$@
  * <p>
- * java -Ddans.config.default=/etc/opt/dans.knaw.nl/my-app/config.yml my-app.jar $ARGS
- * ```
+ * java -Ddans.config.default=/etc/opt/dans.knaw.nl/my-app/config.yml my-app.jar $ARGS ```
  *
  * @param <T> the application's configuration class
  */

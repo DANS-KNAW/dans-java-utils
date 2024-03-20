@@ -22,8 +22,7 @@ import org.junit.jupiter.api.ClassOrdererContext;
 import java.util.Comparator;
 
 /**
- * The integration tests mess up the logging facilities for the unit tests, so we run the integration tests after the unit test
- * This requires every integration test to end with "IntegrationTest"
+ * The integration tests mess up the logging facilities for the unit tests, so we run the integration tests after the unit test This requires every integration test to end with "IntegrationTest"
  */
 public class IntegrationTestAfterUnitTestClassOrderer implements ClassOrderer {
     @Override

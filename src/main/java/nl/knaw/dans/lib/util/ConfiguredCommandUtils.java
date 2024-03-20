@@ -25,15 +25,15 @@ public class ConfiguredCommandUtils {
         String defaultConfig = System.getProperty(DANS_DEFAULT_CONFIG_PROPERTY);
         if (configFileAsOption)
             return subparser.addArgument("-c", "--config")
-                    .nargs("?")
-                    .dest("file")
-                    .setDefault(defaultConfig)
-                    .help("application configuration file");
+                .nargs("?")
+                .dest("file")
+                .setDefault(defaultConfig)
+                .help("application configuration file");
         else
             return subparser.addArgument("file")
-                    .nargs("?")
-                    .setDefault(defaultConfig)
-                    .help("application configuration file");
+                .nargs("?")
+                .setDefault(defaultConfig)
+                .help("application configuration file");
 
     }
 
