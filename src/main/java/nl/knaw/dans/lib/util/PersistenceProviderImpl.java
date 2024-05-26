@@ -16,38 +16,38 @@
 package nl.knaw.dans.lib.util;
 
 import io.dropwizard.hibernate.AbstractDAO;
-import nl.knaw.dans.layerstore.ItemRecord;
-import nl.knaw.dans.layerstore.PersistenceProvider;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 
-public class PersistenceProviderImpl extends AbstractDAO<ItemRecord> implements PersistenceProvider<ItemRecord> {
+public class PersistenceProviderImpl<E> extends AbstractDAO<E> implements PersistenceProvider<E> {
+    private final Class<E> entityClass;
 
-    public PersistenceProviderImpl(SessionFactory sessionFactory) {
+    public PersistenceProviderImpl(SessionFactory sessionFactory, Class<E> entityClass) {
         super(sessionFactory);
+        this.entityClass = entityClass;
     }
 
     @Override
-    public ItemRecord persist(ItemRecord entity) {
+    public E persist(E entity) {
         return super.persist(entity);
     }
 
     @Override
-    public void update(ItemRecord entity) {
+    public void update(E entity) {
         currentSession().update(entity);
     }
 
     @Override
-    public void delete(ItemRecord entity) {
+    public void delete(E entity) {
         currentSession().delete(entity);
     }
 
     @Override
-    public ItemRecord get(Long id) {
-        return currentSession().get(ItemRecord.class, id);
+    public E get(Long id) {
+        return currentSession().get(entityClass, id);
     }
 
     @Override

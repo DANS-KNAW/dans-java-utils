@@ -33,9 +33,6 @@
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
         <tag>HEAD</tag>
     </scm>
-    <properties>
-        <dans-layer-store-lib.version>0.3.0-SNAPSHOT</dans-layer-store-lib.version>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>info.picocli</groupId>
@@ -59,12 +56,6 @@
         <dependency>
             <groupId>nl.knaw.dans</groupId>
             <artifactId>dans-dataverse-client-lib</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>nl.knaw.dans</groupId>
-            <artifactId>dans-layer-store-lib</artifactId>
-            <version>${dans-layer-store-lib.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
