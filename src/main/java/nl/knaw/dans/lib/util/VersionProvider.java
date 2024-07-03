@@ -22,14 +22,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class VersionProvider {
-    public String getVersion() throws IOException {
-        try (InputStream inputStream = getClass().getResourceAsStream("/version.txt")) {
-            if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            }
-            else {
-                throw new IllegalStateException("Version file not found");
-            }
-        }
+    public String getVersion(){
+        // this returns null when executed locally with start.sh (mvn exec:java)
+        return this.getClass().getPackage().getImplementationVersion();
     }
 }
