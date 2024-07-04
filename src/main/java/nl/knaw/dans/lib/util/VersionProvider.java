@@ -37,7 +37,8 @@ public class VersionProvider {
             String implementationVersion = aClass.getPackage().getImplementationVersion();
             if (implementationVersion == null) {
                 // executed locally with start.sh (mvn exec:java)
-                log.warn("Implementation-Version not found try: unzip -p target/XXX.jar META-INF/MANIFEST.MF | grep '^Implementation-Version'");
+                // unzip -p target/XXX.jar META-INF/MANIFEST.MF | grep '^Implementation-Version'
+                log.warn("MANIFEST.MF not found in jar or it did not contain a value for Implementation-Version");
             }
             return implementationVersion;
         }
