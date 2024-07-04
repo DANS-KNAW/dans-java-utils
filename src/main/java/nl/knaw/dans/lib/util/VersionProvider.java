@@ -15,15 +15,34 @@
  */
 package nl.knaw.dans.lib.util;
 
-import org.apache.commons.io.IOUtils;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
 
+@Slf4j
 public class VersionProvider {
-    public String getVersion(){
-        // this returns null when executed locally with start.sh (mvn exec:java)
-        return this.getClass().getPackage().getImplementationVersion();
+    public String getVersion() {
+        Optional<StackTraceElement> mainOpt = Arrays.stream(
+            Thread.currentThread().getStackTrace()
+        ).filter(stackTraceElement ->
+            stackTraceElement.getMethodName().equals("main")
+        ).findFirst();
+        return mainOpt.map(VersionProvider::getImplementationVersion).orElse(null);
+    }
+
+    private static String getImplementationVersion(StackTraceElement stackTraceElement) {
+        try {
+            Class<?> aClass = Class.forName(stackTraceElement.getClassName());
+            String implementationVersion = aClass.getPackage().getImplementationVersion();
+            if (implementationVersion == null) {
+                // executed locally with start.sh (mvn exec:java)
+                log.warn("Implementation-Version not found try: unzip -p target/XXX.jar META-INF/MANIFEST.MF | grep '^Implementation-Version'");
+            }
+            return implementationVersion;
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
