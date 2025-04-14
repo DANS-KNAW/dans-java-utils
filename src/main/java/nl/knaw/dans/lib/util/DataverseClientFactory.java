@@ -19,14 +19,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.client.HttpClientBuilder;
 import io.dropwizard.client.HttpClientConfiguration;
 import io.dropwizard.core.setup.Environment;
+import io.dropwizard.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
+import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
 import java.net.URI;
+import java.text.MessageFormat;
+
+import static java.text.MessageFormat.format;
 
 @Getter
 @Setter
@@ -49,9 +54,18 @@ public class DataverseClientFactory {
         return build(environment, name, null);
     }
 
+    private void noNanos(Duration t, String name) {
+        if (t.toMilliseconds() * 1000000 != t.toNanoseconds())
+            throw new IllegalArgumentException(format("{0}.{1}.{2} must not be set in nanoseconds {3}", DataverseClient.class.getSimpleName(), httpClient.getClass().getSimpleName(), name, t));
+    }
+
     public DataverseClient build(Environment environment, String name, String overrideApiKey) {
-        if ((environment == null) != (httpClient == null)) {
-            throw new IllegalArgumentException("Both environment and httpClient must be set or both unset.");
+
+        if (httpClient != null) {
+            noNanos(httpClient.getTimeout(), "timeout");
+            noNanos(httpClient.getConnectionTimeout(), "connectionTimeout");
+            noNanos(httpClient.getConnectionRequestTimeout(), "connectionRequestTimeout");
+            noNanos(httpClient.getKeepAlive(), "keepAlive");
         }
 
         DataverseClientConfig config = new DataverseClientConfig(
@@ -63,13 +77,15 @@ public class DataverseClientFactory {
             awaitIndexingMillisecondsBetweenRetries,
             unblockKey);
 
-        if (environment == null) {
-            return new DataverseClient(config, HttpClients.createDefault(), new ObjectMapper());
+        ObjectMapper objectMapper = environment == null ? new ObjectMapper() : environment.getObjectMapper();
+        if (httpClient == null) {
+            return new DataverseClient(config, HttpClients.createDefault(), objectMapper);
         }
         else {
+            Environment env = environment == null ? new Environment(DataverseClient.class.getSimpleName()) : environment;
             return new DataverseClient(config,
-                new HttpClientBuilder(environment).using(httpClient).build(name), // N.B. name must be unique in the Environment, otherwise the old connection will be overwritten
-                environment.getObjectMapper());
+                new HttpClientBuilder(env).using(httpClient).build(name), // N.B. name must be unique in the Environment, otherwise the old connection will be overwritten
+                objectMapper);
         }
     }
 
