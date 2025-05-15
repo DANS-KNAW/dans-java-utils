@@ -25,7 +25,7 @@
         <relativePath />
     </parent>
     <artifactId>dans-java-utils</artifactId>
-    <version>1.5.1-SNAPSHOT</version>
+    <version>1.5.2-SNAPSHOT</version>
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>

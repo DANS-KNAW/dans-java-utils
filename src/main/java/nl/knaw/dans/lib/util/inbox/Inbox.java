@@ -19,13 +19,11 @@ import io.dropwizard.lifecycle.Managed;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 
-import javax.validation.constraints.Min;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,8 +44,7 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private final IOFileFilter fileFilter;
     @NonNull
     private final InboxTaskFactory taskFactory;
-    @Min(1)
-    private final int interval;
+    private final Runnable onPollingHandler;
     @NonNull
     private final ExecutorService executorService;
     @NonNull
@@ -56,14 +53,16 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private final FileAlterationMonitor monitor;
 
     @Builder
-    private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator) {
+    private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator) {
         this.inbox = inbox;
         this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : fileFilter;
         this.taskFactory = taskFactory;
-        this.interval = interval == 0 ? 1000 : interval;
+        this.onPollingHandler = onPollingHandler == null ?
+            () -> {
+            } : onPollingHandler;
         this.executorService = executorService == null ? Executors.newSingleThreadExecutor() : executorService;
         this.inboxItemComparator = inboxItemComparator == null ? Comparator.comparing(Path::getFileName) : inboxItemComparator;
-        this.monitor = new FileAlterationMonitor(interval);
+        this.monitor = new FileAlterationMonitor(interval == 0 ? 1000 : interval);
     }
 
     @Override
@@ -97,6 +96,11 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     public void onDirectoryCreate(File directory) {
         log.debug("New inbox item detected at: {}", directory);
         executorService.submit(taskFactory.createInboxTask(directory.toPath()));
+    }
+
+    @Override
+    public void onStart(FileAlterationObserver observer) {
+        onPollingHandler.run();
     }
 
     private void processFilesBeforeStart() throws IOException {

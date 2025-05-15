@@ -25,11 +25,13 @@ import org.mockito.Mockito;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+@Slf4j
 public class InboxTest extends AbstractTestWithTestDir {
     private final InboxTaskFactory inboxTaskFactoryMock = Mockito.mock(InboxTaskFactory.class);
 
@@ -100,4 +102,32 @@ public class InboxTest extends AbstractTestWithTestDir {
         assertThat(t.done).isTrue();
     }
 
+    @Test
+    public void onPollingHandler_is_called_before_each_polling_run() throws Exception {
+        // Given
+        Path inboxDir = testDir.resolve("inbox");
+        Files.createDirectory(inboxDir);
+        AtomicInteger pollingHandlerCallCount = new AtomicInteger(0);
+        Inbox inbox = Inbox.builder()
+            .inbox(inboxDir)
+            .fileFilter(FileFilterUtils.fileFileFilter())
+            .taskFactory(inboxTaskFactoryMock)
+            .interval(10)
+            .onPollingHandler(() -> {
+                log.debug("onPollingHandler called {} times", pollingHandlerCallCount.get());
+                pollingHandlerCallCount.incrementAndGet();
+            })
+            .build();
+        BooleanTask t = new BooleanTask();
+        when(inboxTaskFactoryMock.createInboxTask(any())).thenReturn(t);
+        inbox.start();
+
+        // Give the inbox some time to start and poll multiple times
+        Thread.sleep(1000);
+
+        // Then
+        assertThat(t.done).isFalse(); // Ensure the task was not executed
+        // Ensure it was called multiple times. It is not possible to predict the exact number of calls, but more than 10 times seems reasonable.
+        assertThat(pollingHandlerCallCount.get()).isGreaterThan(10);
+    }
 }
