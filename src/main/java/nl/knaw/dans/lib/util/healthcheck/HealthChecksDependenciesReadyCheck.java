@@ -72,6 +72,8 @@ public class HealthChecksDependenciesReadyCheck implements DependenciesReadyChec
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                log.warn("Interrupted while waiting for health checks to become healthy, stopping wait");
+                break;
             }
         }
     }
