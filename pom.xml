@@ -25,12 +25,12 @@
         <relativePath />
     </parent>
     <artifactId>dans-java-utils</artifactId>
-    <version>2.5.2-SNAPSHOT</version>
+    <version>2.6.0</version>
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v2.6.0</tag>
     </scm>
     <dependencies>
         <dependency>
