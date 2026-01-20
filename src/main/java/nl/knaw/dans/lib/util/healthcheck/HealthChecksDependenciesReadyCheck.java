@@ -93,8 +93,8 @@ public class HealthChecksDependenciesReadyCheck implements DependenciesReadyChec
             .collect(Collectors.toList());
     }
 
-    private boolean allHealthy(List<HealthCheck> checksToWait) {
-        for (var healthCheck : checksToWait) {
+    private boolean allHealthy(List<HealthCheck> checksToWaitFor) {
+        for (var healthCheck : checksToWaitFor) {
             if (!healthCheck.execute().isHealthy()) {
                 return false;
             }
