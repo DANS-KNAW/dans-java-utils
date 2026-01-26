@@ -65,8 +65,12 @@ public class HealthChecksDependenciesReadyCheck implements DependenciesReadyChec
     @Override
     public void waitUntilReady(String... checks) {
         List<HealthCheck> checksToWaitFor = getChecksToWaitFor(checks);
-        while (running && !allHealthy(checksToWaitFor)) {
-            log.warn("Not all health checks are healthy yet, waiting for {} ms", pollInterval);
+        while (running) {
+            var failing = notHealthy(checksToWaitFor);
+            if (failing.isEmpty()) {
+                break;
+            }
+            log.warn("Not all health checks are healthy yet (failing: {}), waiting for {} ms", failing, pollInterval);
             try {
                 sleep(pollInterval);
             }
@@ -95,12 +99,14 @@ public class HealthChecksDependenciesReadyCheck implements DependenciesReadyChec
             .collect(Collectors.toList());
     }
 
-    private boolean allHealthy(List<HealthCheck> checksToWaitFor) {
+    private List<HealthCheck> notHealthy(List<HealthCheck> checksToWaitFor) {
+        List<HealthCheck> failing = new ArrayList<>();
         for (var healthCheck : checksToWaitFor) {
-            if (!healthCheck.execute().isHealthy()) {
-                return false;
+            var result = healthCheck.execute();
+            if (!result.isHealthy()) {
+                failing.add(healthCheck);
             }
         }
-        return true;
+        return failing;
     }
 }

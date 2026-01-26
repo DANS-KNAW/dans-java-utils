@@ -58,4 +58,12 @@ public class PingHealthCheck extends HealthCheck {
             return Result.unhealthy("Connection to %s could not be established: %s", name, e.getMessage());
         }
     }
+
+    @Override
+    public String toString() {
+        return "PingHealthCheck{" +
+            "name='" + name + '\'' +
+            ", pingUri=" + pingUri +
+            '}';
+    }
 }
