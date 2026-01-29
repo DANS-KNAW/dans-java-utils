@@ -49,10 +49,7 @@ public class FileSystemFreeSpaceHealthCheckTest {
 
             // Then
             assertThat(result.isHealthy()).isTrue();
-            assertThat(result.getMessage())
-                .contains("Free space on file system containing")
-                .contains("is ")
-                .contains("which is above the required margin");
+            assertThat(result.getMessage()).isNullOrEmpty();
         }
     }
 

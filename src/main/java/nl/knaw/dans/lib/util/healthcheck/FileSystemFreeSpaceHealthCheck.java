@@ -41,10 +41,7 @@ public class FileSystemFreeSpaceHealthCheck extends HealthCheck {
                 path, freeSpace, requiredSpace
             ));
         }
-        return Result.healthy(String.format(
-            "Free space on file system containing %s is %d bytes, which is above the required margin of %d bytes.",
-            path, freeSpace, requiredSpace
-        ));
+        return Result.healthy();
     }
 
     @Override
