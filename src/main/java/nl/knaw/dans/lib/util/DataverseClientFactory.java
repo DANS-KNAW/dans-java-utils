@@ -45,6 +45,9 @@ public class DataverseClientFactory {
     private int awaitIndexingMaxNumberOfRetries = 15;
     private int awaitIndexingMillisecondsBetweenRetries = 1000;
     private HttpClientConfiguration httpClient = null;
+    private String databaseUrl;
+    private String databaseUser;
+    private String databasePassword;
 
     public DataverseClient build() {
         return build(null, null, null);
@@ -75,7 +78,12 @@ public class DataverseClientFactory {
             awaitLockStateMillisecondsBetweenRetries,
             awaitIndexingMaxNumberOfRetries,
             awaitIndexingMillisecondsBetweenRetries,
-            unblockKey);
+            unblockKey,
+            databaseUrl,
+            databaseUser,
+            databasePassword);
+
+
 
         ObjectMapper objectMapper = environment == null ? new ObjectMapper() : environment.getObjectMapper();
         if (httpClient == null) {

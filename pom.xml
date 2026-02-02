@@ -32,6 +32,11 @@
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
+    <properties>
+        <dans-dataverse-client-lib.version>1.6.0</dans-dataverse-client-lib.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>info.picocli</groupId>
