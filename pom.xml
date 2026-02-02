@@ -34,7 +34,7 @@
     </scm>
 
     <properties>
-        <dans-dataverse-client-lib.version>1.5.2-SNAPSHOT</dans-dataverse-client-lib.version>
+        <dans-dataverse-client-lib.version>1.6.0</dans-dataverse-client-lib.version>
     </properties>
 
     <dependencies>
