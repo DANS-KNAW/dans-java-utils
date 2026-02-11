@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>
@@ -204,6 +206,57 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
 
         observer.addListener(this);
         monitor.addObserver(observer);
+
+        // Set a ThreadFactory that auto-restarts on RuntimeException (but not on Error)
+        monitor.setThreadFactory(new AutoRestartingThreadFactory("InboxMonitor"));
         monitor.start();
+    }
+
+    /**
+     * ThreadFactory that creates threads which restart the delegate Runnable when it crashes with a RuntimeException.
+     * Errors (like OutOfMemoryError) are not caught to avoid masking fatal problems.
+     */
+    static final class AutoRestartingThreadFactory implements ThreadFactory {
+        private final String namePrefix;
+        private final AtomicInteger threadCount = new AtomicInteger(1);
+        private final long resetBackoffAfterMillis = 3_600_000; // 1 hour
+
+        AutoRestartingThreadFactory(final String namePrefix) {
+            this.namePrefix = namePrefix;
+        }
+
+        @Override
+        public Thread newThread(final Runnable r) {
+            var t = new Thread(() -> {
+                long backoffMillis = 500;
+                final long maxBackoffMillis = 30_000;
+                while (true) {
+                    var runStart = System.currentTimeMillis();
+                    try {
+                        r.run();
+                        // If run() returned normally, exit.
+                        return;
+                    } catch (RuntimeException ex) {
+                        var runDuration = System.currentTimeMillis() - runStart;
+                        // If runnable ran stably for at least resetBackoffAfterMillis, reset backoff
+                        if (runDuration >= resetBackoffAfterMillis) {
+                            backoffMillis = 500;
+                        }
+                        log.error("Thread '{}' crashed with RuntimeException after {} ms: {}. Restarting thread.", Thread.currentThread().getName(), runDuration, ex.getMessage());
+                        log.debug("Stack trace for RuntimeException that caused thread '{}' to crash", Thread.currentThread().getName(), ex);
+                        try {
+                            Thread.sleep(backoffMillis);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                        backoffMillis = Math.min(backoffMillis * 2, maxBackoffMillis);
+                        // Loop to restart.
+                    }
+                }
+            }, namePrefix + "-" + threadCount.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        }
     }
 }
