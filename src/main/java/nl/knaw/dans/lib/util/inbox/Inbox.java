@@ -66,10 +66,11 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
     private final CountDownLatch awaitLatch;
     private final List<Path> createdFilesAndDirectories = new LinkedList<>();
     private boolean initialItemsProcessed = false;
+    private final int startupGracePeriodMillis;
 
     @Builder
-    private Inbox(Path inbox, IOFileFilter fileFilter, InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator,
-        CountDownLatch awaitLatch) {
+    private Inbox(Path inbox, IOFileFilter fileFilter, @NonNull InboxTaskFactory taskFactory, Runnable onPollingHandler, int interval, ExecutorService executorService, Comparator<Path> inboxItemComparator,
+        CountDownLatch awaitLatch, Integer startupGracePeriodMillis) {
         this.inboxFileEntry = new FileEntry(inbox.toFile());
         this.fileFilter = fileFilter == null ? CustomFileFilters.subDirectoryOf(inbox) : FileFilterUtils.and(fileFilter, CustomFileFilters.childOf(inbox));
         this.taskFactory = taskFactory;
@@ -79,6 +80,7 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
         this.inboxItemComparator = inboxItemComparator == null ? Comparator.comparing(Path::getFileName) : inboxItemComparator;
         this.monitor = new FileAlterationMonitor(interval == 0 ? 1000 : interval);
         this.awaitLatch = awaitLatch;
+        this.startupGracePeriodMillis = startupGracePeriodMillis == null || startupGracePeriodMillis <= 0 ? 10_000 : startupGracePeriodMillis;
     }
 
     @Override
@@ -89,13 +91,43 @@ public class Inbox extends FileAlterationListenerAdaptor implements Managed {
         }
         log.info("Starting Inbox at '{}'", this.inboxFileEntry.getFile());
 
-        try {
-            log.debug("Starting file alteration monitor for path '{}'", this.inboxFileEntry.getFile());
-            startFileAlterationMonitor();
-        }
-        catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw e;
+        // Start asynchronously and retry until inbox becomes available
+        executorService.submit(this::awaitInboxAndStartMonitor);
+    }
+
+    private void awaitInboxAndStartMonitor() {
+        var inboxPath = inboxFileEntry.getFile().toPath();
+        while (true) {
+            if (!Files.exists(inboxPath)) {
+                log.warn("Inbox directory does not exist: {}. Retrying in {} ms", inboxPath, startupGracePeriodMillis);
+            }
+            else if (!Files.isDirectory(inboxPath)) {
+                log.warn("Inbox path is not a directory: {}. Retrying in {} ms", inboxPath, startupGracePeriodMillis);
+            }
+            else if (!Files.isReadable(inboxPath)) {
+                log.warn("Inbox directory is not readable: {}. Retrying in {} ms", inboxPath, startupGracePeriodMillis);
+            }
+            else {
+                try {
+                    log.debug("Starting file alteration monitor for path '{}'", this.inboxFileEntry.getFile());
+                    startFileAlterationMonitor();
+                    return;
+                }
+                catch (IOException e) {
+                    log.error("Failed to start file alteration monitor: {}. Retrying in {} ms", e.getMessage(), startupGracePeriodMillis);
+                }
+                catch (Exception e) {
+                    log.error("Unexpected error while starting inbox monitor", e);
+                }
+            }
+            try {
+                Thread.sleep(startupGracePeriodMillis);
+            }
+            catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.warn("Inbox startup retry interrupted");
+                return;
+            }
         }
     }
 

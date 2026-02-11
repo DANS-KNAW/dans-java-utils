@@ -130,4 +130,76 @@ public class InboxTest extends AbstractTestWithTestDir {
         // Ensure it was called multiple times. It is not possible to predict the exact number of calls, but more than 10 times seems reasonable.
         assertThat(pollingHandlerCallCount.get()).isGreaterThan(10);
     }
+
+    @Test
+    public void inbox_retries_start_when_directory_is_missing_then_becomes_available() throws Exception {
+        // Given
+        Path inboxDir = testDir.resolve("inbox-missing"); // do not create it yet
+        BooleanTask t = new BooleanTask();
+        when(inboxTaskFactoryMock.createInboxTask(any())).thenReturn(t);
+        Inbox inbox = Inbox.builder()
+            .inbox(inboxDir)
+            .fileFilter(FileFilterUtils.fileFileFilter())
+            .taskFactory(inboxTaskFactoryMock)
+            .interval(50)
+            .startupGracePeriodMillis(100)
+            .build();
+
+        // When: start while inbox dir does not exist
+        inbox.start();
+        // Wait a bit longer than grace period to ensure at least one retry
+        Thread.sleep(150);
+
+        // Now create the inbox directory and a file to be picked up
+        Files.createDirectory(inboxDir);
+        Files.createFile(inboxDir.resolve("file1.txt"));
+
+        // Give the inbox some time to detect the file after becoming available
+        Thread.sleep(500);
+
+        // Then
+        assertThat(t.isDone()).isTrue();
+    }
+
+    @Test
+    public void inbox_retries_start_when_directory_is_unreadable_then_becomes_readable() throws Exception {
+        // Given
+        Path inboxDir = testDir.resolve("inbox-unreadable");
+        Files.createDirectory(inboxDir);
+        BooleanTask t = new BooleanTask();
+        when(inboxTaskFactoryMock.createInboxTask(any())).thenReturn(t);
+        Inbox inbox = Inbox.builder()
+            .inbox(inboxDir)
+            .fileFilter(FileFilterUtils.fileFileFilter())
+            .taskFactory(inboxTaskFactoryMock)
+            .interval(50)
+            .startupGracePeriodMillis(100)
+            .build();
+
+        // Make directory unreadable for the current process (POSIX systems)
+        try {
+            Files.setPosixFilePermissions(inboxDir, java.util.Set.of());
+        }
+        catch (UnsupportedOperationException e) {
+            // Non-POSIX file system; skip this test
+            log.warn("POSIX file permissions not supported; skipping unreadable directory test");
+            return;
+        }
+
+        // When: start while inbox dir is unreadable
+        inbox.start();
+        Thread.sleep(150);
+
+        // Restore read permission and create a file
+        Files.setPosixFilePermissions(inboxDir, java.util.Set.of(java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE,
+            java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE));
+        Files.createFile(inboxDir.resolve("file2.txt"));
+
+        // Give the inbox some time to detect the file after permissions fixed
+        Thread.sleep(500);
+
+        // Then
+        assertThat(t.isDone()).isTrue();
+    }
 }
