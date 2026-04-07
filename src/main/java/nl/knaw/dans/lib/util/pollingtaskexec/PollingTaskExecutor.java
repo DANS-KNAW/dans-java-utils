@@ -62,7 +62,7 @@ public class PollingTaskExecutor<R> implements Managed {
 
     @Override
     public void start() {
-        long delayMs = Math.max(0, pollingInterval.toMillis());
+        long delayMs = Math.max(1L, pollingInterval.toMillis());
         future = scheduler.scheduleWithFixedDelay(this::tick, 0, delayMs, TimeUnit.MILLISECONDS);
         log.info("{} started; polling every {}", name, pollingInterval);
     }
