@@ -44,7 +44,8 @@ public class PollingTaskExecutor<R> implements Managed {
     private ScheduledFuture<?> future;
 
     /**
-     * Copy constructor. The source executor must not be running.
+     * Copy constructor. The source executor must not be running. The purpose of this constructor is only to be able to wrap a PollingTaskExecutor in a UnitOfWorkAwareProxy. In general, no copies
+     * should be created of a PollingTaskExecutor, and in particular should the schedular not be shared among PollingTaskExecutors.
      *
      * @param other the source executor
      */
