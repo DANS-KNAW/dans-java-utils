@@ -25,11 +25,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import nl.knaw.dans.lib.dataverse.DataverseClient;
 import nl.knaw.dans.lib.dataverse.DataverseClientConfig;
-import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 
 import java.net.URI;
-import java.text.MessageFormat;
 
 import static java.text.MessageFormat.format;
 
