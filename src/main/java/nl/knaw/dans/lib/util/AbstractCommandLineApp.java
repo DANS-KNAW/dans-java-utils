@@ -69,10 +69,12 @@ public abstract class AbstractCommandLineApp<C extends Configuration> implements
         CommandLine commandLine = new CommandLine(this);
         configureCommandLine(commandLine, config);
         commandLine.addSubcommand(new GenerateCompletion());
+        int exitCode = 0;
         try {
-            commandLine.execute(args);
+            exitCode = commandLine.execute(args);
         }
         catch (Exception e) {
+            // commandLine.execute(args) never throws an exception, according to its JavaDocs, so maybe this handler will never be reached.
             log.error("Error running command", e);
             flushAndStopLoggerContext();
             System.exit(1);
@@ -80,7 +82,7 @@ public abstract class AbstractCommandLineApp<C extends Configuration> implements
         finally {
             flushAndStopLoggerContext();
         }
-        System.exit(0);
+        System.exit(exitCode);
     }
 
     private void flushAndStopLoggerContext() {
