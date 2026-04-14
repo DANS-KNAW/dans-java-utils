@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class PollingTaskExecutor<R> implements Managed {
     private final String name;
-    private final ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduledExecutorService;
     private final Duration pollingInterval;
     private final TaskSource<R> taskSource;
     private final TaskFactory<R> taskFactory;
@@ -44,8 +44,8 @@ public class PollingTaskExecutor<R> implements Managed {
 
     private ScheduledFuture<?> future;
 
-    public PollingTaskExecutor(String name, ScheduledExecutorService scheduler, Duration pollingInterval, TaskSource<R> taskSource, TaskFactory<R> taskFactory) {
-        this(name, scheduler, pollingInterval, taskSource, taskFactory, new ImmediateTaskScheduler());
+    public PollingTaskExecutor(String name, ScheduledExecutorService scheduledExecutorService, Duration pollingInterval, TaskSource<R> taskSource, TaskFactory<R> taskFactory) {
+        this(name, scheduledExecutorService, pollingInterval, taskSource, taskFactory, new ImmediateTaskScheduler());
     }
 
     /**
@@ -60,7 +60,7 @@ public class PollingTaskExecutor<R> implements Managed {
             throw new IllegalArgumentException("Cannot copy a running executor");
         }
         this.name = other.name;
-        this.scheduler = other.scheduler;
+        this.scheduledExecutorService = other.scheduledExecutorService;
         this.pollingInterval = other.pollingInterval;
         this.taskSource = other.taskSource;
         this.taskFactory = other.taskFactory;
@@ -70,7 +70,7 @@ public class PollingTaskExecutor<R> implements Managed {
     @Override
     public void start() {
         long delayMs = Math.max(1L, pollingInterval.toMillis());
-        future = scheduler.scheduleWithFixedDelay(this::tick, 0, delayMs, TimeUnit.MILLISECONDS);
+        future = scheduledExecutorService.scheduleWithFixedDelay(this::tick, 0, delayMs, TimeUnit.MILLISECONDS);
         log.info("{} started; polling every {}", name, pollingInterval);
     }
 
@@ -79,7 +79,7 @@ public class PollingTaskExecutor<R> implements Managed {
         if (future != null) {
             future.cancel(false);
         }
-        scheduler.shutdown();
+        scheduledExecutorService.shutdown();
         log.info("{} stopped", name);
     }
 
