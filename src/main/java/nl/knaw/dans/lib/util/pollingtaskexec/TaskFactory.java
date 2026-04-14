@@ -15,12 +15,14 @@
  */
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
+import java.util.List;
+
 /**
- * Factory interface for creating {@link Runnable} tasks from a given record.
+ * Factory interface for creating {@link Runnable} tasks from a list of records.
  * This interface allows the decoupling of task creation logic from task execution logic.
  *
  * @param <R> the type of the record used to create a {@link Runnable} task
  */
 public interface TaskFactory<R> {
-    Runnable create(R record);
+    Runnable create(List<R> records);
 }

@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -80,13 +80,12 @@ public class PollingTaskExecutor<R> implements Managed {
     @UnitOfWork
     public void tick() {
         try {
-            Optional<R> next = taskSource.nextTask();
-            if (next.isEmpty()) {
+            List<R> inputs = taskSource.nextInputs();
+            if (inputs.isEmpty()) {
                 return;
             }
-            R record = next.get();
-            log.debug("{}: found next task record: {}", name, record);
-            Runnable task = taskFactory.create(record);
+            log.debug("{}: found next task record(s): {}", name, inputs);
+            Runnable task = taskFactory.create(inputs);
             task.run();
         }
         catch (Exception e) {

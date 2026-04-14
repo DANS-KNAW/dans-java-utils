@@ -15,14 +15,14 @@
  */
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
-import java.util.Optional;
+import java.util.List;
 
 /**
- * Represents a source of tasks from which tasks can be fetched one at a time. Implementations of this interface are responsible for providing the logic to retrieve the next available task or
- * returning an empty result if no tasks are available.
+ * Represents a source of tasks from which tasks can be fetched. Implementations of this interface are responsible for providing the logic to retrieve the next available inputs that together represent
+ * one task to be executed, returning an empty list if no tasks are available.
  *
  * @param <R> the type of the tasks managed by this source
  */
 public interface TaskSource<R> {
-    Optional<R> nextTask();
+    List<R> nextInputs();
 }

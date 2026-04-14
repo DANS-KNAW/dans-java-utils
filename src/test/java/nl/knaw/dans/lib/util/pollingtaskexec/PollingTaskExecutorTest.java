@@ -19,7 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -80,36 +81,37 @@ class PollingTaskExecutorTest {
     @Test
     void tick_should_poll_source_create_task_and_run_it() {
         String record = "test-record";
+        List<String> records = Collections.singletonList(record);
         Runnable task = mock(Runnable.class);
 
-        when(taskSource.nextTask()).thenReturn(Optional.of(record));
-        when(taskFactory.create(record)).thenReturn(task);
+        when(taskSource.nextInputs()).thenReturn(records);
+        when(taskFactory.create(records)).thenReturn(task);
 
         executor.tick();
 
-        verify(taskSource).nextTask();
-        verify(taskFactory).create(record);
+        verify(taskSource).nextInputs();
+        verify(taskFactory).create(records);
         verify(task).run();
     }
 
     @Test
     void tick_should_do_nothing_if_source_is_empty() {
-        when(taskSource.nextTask()).thenReturn(Optional.empty());
+        when(taskSource.nextInputs()).thenReturn(Collections.emptyList());
 
         executor.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInputs();
         verify(taskFactory, never()).create(any());
     }
 
     @Test
     void tick_should_catch_and_log_exceptions() {
-        when(taskSource.nextTask()).thenThrow(new RuntimeException("test exception"));
+        when(taskSource.nextInputs()).thenThrow(new RuntimeException("test exception"));
 
         // Should not throw exception
         executor.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInputs();
     }
 
     @Test
@@ -118,14 +120,15 @@ class PollingTaskExecutorTest {
 
         // Verify it works as expected by running a tick on the copy
         String record = "test-record";
+        List<String> records = Collections.singletonList(record);
         Runnable task = mock(Runnable.class);
-        when(taskSource.nextTask()).thenReturn(Optional.of(record));
-        when(taskFactory.create(record)).thenReturn(task);
+        when(taskSource.nextInputs()).thenReturn(records);
+        when(taskFactory.create(records)).thenReturn(task);
 
         copy.tick();
 
-        verify(taskSource).nextTask();
-        verify(taskFactory).create(record);
+        verify(taskSource).nextInputs();
+        verify(taskFactory).create(records);
         verify(task).run();
     }
 
