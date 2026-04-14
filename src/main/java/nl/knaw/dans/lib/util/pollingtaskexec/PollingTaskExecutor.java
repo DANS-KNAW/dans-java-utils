@@ -40,8 +40,13 @@ public class PollingTaskExecutor<R> implements Managed {
     private final Duration pollingInterval;
     private final TaskSource<R> taskSource;
     private final TaskFactory<R> taskFactory;
+    private final TaskScheduler taskScheduler;
 
     private ScheduledFuture<?> future;
+
+    public PollingTaskExecutor(String name, ScheduledExecutorService scheduler, Duration pollingInterval, TaskSource<R> taskSource, TaskFactory<R> taskFactory) {
+        this(name, scheduler, pollingInterval, taskSource, taskFactory, new ImmediateTaskScheduler());
+    }
 
     /**
      * Copy constructor. The source executor must not be running. The purpose of this constructor is only to be able to wrap a PollingTaskExecutor in a UnitOfWorkAwareProxy. In general, no copies
@@ -59,6 +64,7 @@ public class PollingTaskExecutor<R> implements Managed {
         this.pollingInterval = other.pollingInterval;
         this.taskSource = other.taskSource;
         this.taskFactory = other.taskFactory;
+        this.taskScheduler = other.taskScheduler;
     }
 
     @Override
@@ -86,7 +92,7 @@ public class PollingTaskExecutor<R> implements Managed {
             }
             log.debug("{}: found next task record(s): {}", name, inputs);
             Runnable task = taskFactory.create(inputs);
-            task.run();
+            taskScheduler.schedule(task);
         }
         catch (Exception e) {
             log.error("{}: error while polling or running task", name, e);
