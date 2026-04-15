@@ -15,14 +15,19 @@
  */
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
+import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import lombok.RequiredArgsConstructor;
+
+import java.util.concurrent.ExecutorService;
 
 @RequiredArgsConstructor
 public class ExecutorServiceTaskScheduler implements TaskScheduler {
-    private final java.util.concurrent.ExecutorService executorService;
+    private final ExecutorService executorService;
+    private final UnitOfWorkAwareProxyFactory unitOfWorkAwareProxyFactory;
 
     @Override
     public void schedule(Runnable task) {
-        executorService.submit(task);
+        var proxy = unitOfWorkAwareProxyFactory.create(Runnable.class, new Class[] { Runnable.class }, new Object[] { task });
+        executorService.submit(proxy);
     }
 }
