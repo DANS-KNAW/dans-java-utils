@@ -15,14 +15,20 @@
  */
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+
+import java.util.concurrent.ExecutorService;
 
 /**
- * Factory interface for creating {@link Runnable} tasks from a list of records.
- * This interface allows the decoupling of task creation logic from task execution logic.
+ * A task scheduler implementation that schedules tasks for execution using an {@link ExecutorService}. This class allows for tasks to be executed asynchronously using the provided executor service.
  *
- * @param <R> the type of the record used to create a {@link Runnable} task
  */
-public interface TaskFactory<R> {
-    Runnable create(List<R> records);
+@RequiredArgsConstructor
+public class ExecutorServiceTaskScheduler implements TaskScheduler {
+    private final ExecutorService executorService;
+
+    @Override
+    public void schedule(Runnable task) {
+        executorService.submit(task);
+    }
 }
