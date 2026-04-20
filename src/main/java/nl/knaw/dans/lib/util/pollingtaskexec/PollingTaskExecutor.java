@@ -83,10 +83,9 @@ public class PollingTaskExecutor<R> implements Managed {
         log.info("{} stopped", name);
     }
 
-    @UnitOfWork
     public void tick() {
         try {
-            List<R> inputs = taskSource.nextInputs();
+            List<R> inputs = getNextInputs();
             if (inputs.isEmpty()) {
                 return;
             }
@@ -97,5 +96,11 @@ public class PollingTaskExecutor<R> implements Managed {
         catch (Exception e) {
             log.error("{}: error while polling or running task", name, e);
         }
+    }
+
+    // Must be protected for UnitOfWork to function.
+    @UnitOfWork
+    protected List<R> getNextInputs() {
+        return taskSource.nextInputs();
     }
 }

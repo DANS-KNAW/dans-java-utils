@@ -19,7 +19,8 @@ import java.util.List;
 
 /**
  * Represents a source of tasks from which tasks can be fetched. Implementations of this interface are responsible for providing the logic to retrieve the next available inputs that together represent
- * one task to be executed, returning an empty list if no tasks are available.
+ * one task to be executed, returning an empty list if no tasks are available. This method is run within a @UnitOfWork to ensure that any updates it makes to the database are visible by the resulting
+ * tasks.
  *
  * @param <R> the type of the tasks managed by this source
  */
