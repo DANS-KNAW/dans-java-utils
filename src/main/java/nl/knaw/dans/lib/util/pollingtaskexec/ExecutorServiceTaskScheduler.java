@@ -29,6 +29,6 @@ public class ExecutorServiceTaskScheduler implements TaskScheduler {
 
     @Override
     public void schedule(Runnable task) {
-        executorService.submit(task);
+        executorService.execute(task);
     }
 }
