@@ -22,7 +22,7 @@ import java.util.Optional;
  * task to be executed, returning an empty Optional if no tasks are available. This method is run within a @UnitOfWork to ensure that any updates it makes to the database are visible by the
  * resulting tasks.
  *
- * @param <R> the type of the tasks managed by this source
+ * @param <R> the type of the input used to create or schedule a task
  */
 public interface TaskSource<R> {
     Optional<R> nextInput();
