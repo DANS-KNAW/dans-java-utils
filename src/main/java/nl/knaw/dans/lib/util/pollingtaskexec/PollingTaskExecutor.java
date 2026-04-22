@@ -50,7 +50,7 @@ public class PollingTaskExecutor<R> implements Managed {
 
     /**
      * Copy constructor. The source executor must not be running. The purpose of this constructor is only to be able to wrap a PollingTaskExecutor in a UnitOfWorkAwareProxy. In general, no copies
-     * should be created of a PollingTaskExecutor, and in particular should the schedular not be shared among PollingTaskExecutors.
+     * should be created of a PollingTaskExecutor, and in particular should the scheduler not be shared among PollingTaskExecutors.
      *
      * @param other the source executor
      */
