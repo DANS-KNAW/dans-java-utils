@@ -16,7 +16,7 @@
 package nl.knaw.dans.lib.util.pollingtaskexec;
 
 /**
- * Factory interface for creating {@link Runnable} tasks from a given record.
+ * Factory interface for creating {@link Runnable} tasks from a record.
  * This interface allows the decoupling of task creation logic from task execution logic.
  *
  * @param <R> the type of the record used to create a {@link Runnable} task

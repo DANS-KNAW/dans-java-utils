@@ -36,16 +36,21 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class PollingTaskExecutor<R> implements Managed {
     private final String name;
-    private final ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService scheduledExecutorService;
     private final Duration pollingInterval;
     private final TaskSource<R> taskSource;
     private final TaskFactory<R> taskFactory;
+    private final TaskScheduler taskScheduler;
 
     private ScheduledFuture<?> future;
 
+    public PollingTaskExecutor(String name, ScheduledExecutorService scheduledExecutorService, Duration pollingInterval, TaskSource<R> taskSource, TaskFactory<R> taskFactory) {
+        this(name, scheduledExecutorService, pollingInterval, taskSource, taskFactory, new ImmediateTaskScheduler());
+    }
+
     /**
      * Copy constructor. The source executor must not be running. The purpose of this constructor is only to be able to wrap a PollingTaskExecutor in a UnitOfWorkAwareProxy. In general, no copies
-     * should be created of a PollingTaskExecutor, and in particular should the schedular not be shared among PollingTaskExecutors.
+     * should be created of a PollingTaskExecutor, and in particular should the scheduler not be shared among PollingTaskExecutors.
      *
      * @param other the source executor
      */
@@ -55,16 +60,17 @@ public class PollingTaskExecutor<R> implements Managed {
             throw new IllegalArgumentException("Cannot copy a running executor");
         }
         this.name = other.name;
-        this.scheduler = other.scheduler;
+        this.scheduledExecutorService = other.scheduledExecutorService;
         this.pollingInterval = other.pollingInterval;
         this.taskSource = other.taskSource;
         this.taskFactory = other.taskFactory;
+        this.taskScheduler = other.taskScheduler;
     }
 
     @Override
     public void start() {
         long delayMs = Math.max(1L, pollingInterval.toMillis());
-        future = scheduler.scheduleWithFixedDelay(this::tick, 0, delayMs, TimeUnit.MILLISECONDS);
+        future = scheduledExecutorService.scheduleWithFixedDelay(this::tick, 0, delayMs, TimeUnit.MILLISECONDS);
         log.info("{} started; polling every {}", name, pollingInterval);
     }
 
@@ -73,24 +79,28 @@ public class PollingTaskExecutor<R> implements Managed {
         if (future != null) {
             future.cancel(false);
         }
-        scheduler.shutdown();
+        scheduledExecutorService.shutdown();
         log.info("{} stopped", name);
     }
 
-    @UnitOfWork
     public void tick() {
         try {
-            Optional<R> next = taskSource.nextTask();
-            if (next.isEmpty()) {
+            Optional<R> input = getNextInput();
+            if (input.isEmpty()) {
                 return;
             }
-            R record = next.get();
-            log.debug("{}: found next task record: {}", name, record);
-            Runnable task = taskFactory.create(record);
-            task.run();
+            log.debug("{}: found next task input: {}", name, input.get());
+            Runnable task = taskFactory.create(input.get());
+            taskScheduler.schedule(task);
         }
         catch (Exception e) {
             log.error("{}: error while polling or running task", name, e);
         }
+    }
+
+    // Must be protected for UnitOfWork to function.
+    @UnitOfWork
+    protected Optional<R> getNextInput() {
+        return taskSource.nextInput();
     }
 }

@@ -82,34 +82,34 @@ class PollingTaskExecutorTest {
         String record = "test-record";
         Runnable task = mock(Runnable.class);
 
-        when(taskSource.nextTask()).thenReturn(Optional.of(record));
+        when(taskSource.nextInput()).thenReturn(Optional.of(record));
         when(taskFactory.create(record)).thenReturn(task);
 
         executor.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInput();
         verify(taskFactory).create(record);
         verify(task).run();
     }
 
     @Test
     void tick_should_do_nothing_if_source_is_empty() {
-        when(taskSource.nextTask()).thenReturn(Optional.empty());
+        when(taskSource.nextInput()).thenReturn(Optional.empty());
 
         executor.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInput();
         verify(taskFactory, never()).create(any());
     }
 
     @Test
     void tick_should_catch_and_log_exceptions() {
-        when(taskSource.nextTask()).thenThrow(new RuntimeException("test exception"));
+        when(taskSource.nextInput()).thenThrow(new RuntimeException("test exception"));
 
         // Should not throw exception
         executor.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInput();
     }
 
     @Test
@@ -119,12 +119,12 @@ class PollingTaskExecutorTest {
         // Verify it works as expected by running a tick on the copy
         String record = "test-record";
         Runnable task = mock(Runnable.class);
-        when(taskSource.nextTask()).thenReturn(Optional.of(record));
+        when(taskSource.nextInput()).thenReturn(Optional.of(record));
         when(taskFactory.create(record)).thenReturn(task);
 
         copy.tick();
 
-        verify(taskSource).nextTask();
+        verify(taskSource).nextInput();
         verify(taskFactory).create(record);
         verify(task).run();
     }
