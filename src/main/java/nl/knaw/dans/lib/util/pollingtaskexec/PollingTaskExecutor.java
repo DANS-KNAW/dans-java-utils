@@ -89,7 +89,7 @@ public class PollingTaskExecutor<R> implements Managed {
             if (input.isEmpty()) {
                 return;
             }
-            log.debug("{}: found next task record: {}", name, input.get());
+            log.debug("{}: found next task input: {}", name, input.get());
             Runnable task = taskFactory.create(input.get());
             taskScheduler.schedule(task);
         }
