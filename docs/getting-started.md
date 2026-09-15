@@ -8,23 +8,23 @@ For including the library as a dependency in a Maven project, see [the installat
 
 ### Example: ExecutorServiceFactory
 
-In the configuration class of your DropWizard project, declare a field for configuring the executor. If your executor
-will process jobs, you could name it `jobQueue`
+In the configuration class of your DropWizard project, declare a field for configuring the executor. If your executor processes jobs, you could name it
+`jobQueue`.
 
 ```java
 public class MyAppConfiguration extends Configuration {
 
     private ExecutorServiceFactory jobQueue;
 
-    public void setJobQueue(ExecutorServiceFactory jobQueue)
+    public void setJobQueue(ExecutorServiceFactory jobQueue) {
         this.jobQueue = jobQueue;
     }
 
-    public ExecutorServiceFactory getJobQueue()
+    public ExecutorServiceFactory getJobQueue() {
         return jobQueue;
     }
 
-// ...
+    // ...
 }
 ```
 
@@ -32,15 +32,15 @@ In the configuration file you can now configure the jobQueue as follows:
 
 ```yaml
 jobQueue:
-    nameFormat: "job-queue-thread-%d"
-    
-    maxQueueSize: 4
-    # Number of threads will be increased when maxQueueSize is exceeded.
-    minThreads: 2
-    # No more than maxThreads will be created though
-    maxThreads: 10
-    # Threads will die after 60 seconds of idleness
-    keepAliveTime: 60 seconds
+  nameFormat: "job-queue-thread-%d"
+
+  maxQueueSize: 4
+  # Number of threads will be increased when maxQueueSize is exceeded.
+  minThreads: 2
+  # No more than maxThreads will be created, though
+  maxThreads: 10
+  # Threads will die after 60 seconds of idleness
+  keepAliveTime: 60 seconds
 ```
 
 In your Application class' `run` method you can finally create the actual executor:

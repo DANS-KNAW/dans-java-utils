@@ -16,26 +16,23 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>nl.knaw.dans</groupId>
-        <artifactId>dd-parent</artifactId>
-        <version>1.12.0</version>
-        <relativePath />
+        <groupId>nl.datastations</groupId>
+        <artifactId>dans-core-systems-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath/>
     </parent>
     <artifactId>dans-java-utils</artifactId>
-    <version>4.1.1-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
     <name>DANS Java Utility Classes</name>
     <inceptionYear>2021</inceptionYear>
     <scm>
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
         <tag>HEAD</tag>
     </scm>
-
-    <properties>
-        <dans-dataverse-client-lib.version>1.6.0</dans-dataverse-client-lib.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -58,7 +55,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>nl.knaw.dans</groupId>
+            <groupId>nl.datastations</groupId>
             <artifactId>dans-dataverse-client-lib</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -128,26 +125,27 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- Required to set @{org.mockito:mockito-core:jar} which is needed by surefire -->
+                        <id>resolve-local-dependency-paths</id>
+                        <goals>
+                            <goal>properties</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration combine.children="append">
+                    <argLine>-javaagent:@{org.mockito:mockito-core:jar} -Xshare:off</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>DANS</id>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <url>https://maven.dans.knaw.nl/releases</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>DANS</id>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <url>https://maven.dans.knaw.nl/releases</url>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
 
