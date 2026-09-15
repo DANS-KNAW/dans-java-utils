@@ -22,11 +22,12 @@
         <groupId>nl.datastations</groupId>
         <artifactId>dans-core-systems-parent</artifactId>
         <version>1.0.0</version>
-        <relativePath />
+        <relativePath/>
     </parent>
     <artifactId>dans-java-utils</artifactId>
     <version>5.0.1-SNAPSHOT</version>
     <name>DANS Java Utility Classes</name>
+    <url>https://dans-knaw.github.io/${project.artifactId}</url>
     <inceptionYear>2021</inceptionYear>
 
     <scm>
