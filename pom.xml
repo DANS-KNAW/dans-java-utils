@@ -31,8 +31,8 @@
     <inceptionYear>2021</inceptionYear>
 
     <scm>
-        <connection>scm:git:https://github.com/DANS-KNAW/${project.artifactId}</connection>
-        <developerConnection>scm:git:ssh://github.com/DANS-KNAW/${project.artifactId}</developerConnection>
+        <connection>scm:git:https://github.com/DANS-KNAW/dans-java-utils</connection>
+        <developerConnection>scm:git:ssh://github.com/DANS-KNAW/dans-java-utils</developerConnection>
         <tag>HEAD</tag>
         <url>https://github.com/DANS-KNAW/${project.artifactId}</url>
     </scm>
