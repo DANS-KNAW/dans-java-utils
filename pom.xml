@@ -25,7 +25,7 @@
         <relativePath />
     </parent>
     <artifactId>dans-java-utils</artifactId>
-    <version>5.0.2</version>
+    <version>5.0.3-SNAPSHOT</version>
     <name>DANS Java Utility Classes</name>
     <url>https://dans-knaw.github.io/${project.artifactId}</url>
     <inceptionYear>2021</inceptionYear>
@@ -33,7 +33,7 @@
     <scm>
         <connection>scm:git:https://github.com/DANS-KNAW/dans-java-utils</connection>
         <developerConnection>scm:git:ssh://github.com/DANS-KNAW/dans-java-utils</developerConnection>
-        <tag>v5.0.2</tag>
+        <tag>HEAD</tag>
         <url>https://github.com/DANS-KNAW/dans-java-utils</url>
     </scm>
 
