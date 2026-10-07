@@ -5,3 +5,4 @@
 /release.properties
 /venv
 /.venv-mkdocs
+/__pycache__*
